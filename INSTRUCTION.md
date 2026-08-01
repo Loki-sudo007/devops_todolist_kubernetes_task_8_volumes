@@ -2,47 +2,92 @@
 
 ## Checking that the application is up and running
 
-First, let's check if the pods are running and ready:
+First, check that the application pods are running and ready:
+
 ```bash
 kubectl get pods -n todoapp
 ```
 
-Check if Persistent Volumes have been created:
+The application pods should have the `Running` status, and all containers should be ready.
+
+Check that the PersistentVolume has been created:
+
 ```bash
 kubectl get pv
 ```
-Check if Persistent Volumes Claim have been created:
+
+The PersistentVolume should have the `Bound` status.
+
+Check that the PersistentVolumeClaim has been created:
+
 ```bash
-kubectl get pvc
+kubectl get pvc -n todoapp
 ```
 
-Open a browser and check if the application is working at this address http://localhost:8080
+The PersistentVolumeClaim should also have the `Bound` status.
 
+Forward the application port to the local machine:
 
-## Check if the ConfigMap and Secret data are mounted as files in the correct location
+```bash
+kubectl port-forward deployment/todoapp 8080:8080 -n todoapp
+```
 
-First, you need to look at the pod names:
+Open a browser and check that the application is available at:
+
+```text
+http://localhost:8080
+```
+
+## Checking that ConfigMap data is mounted as files
+
+First, get the application pod name:
+
 ```bash
 kubectl get pods -n todoapp
 ```
 
-Copy the name of the first pod and run the command:
-```bash
-kubectl exec -it <Pod-name> -n todoapp -- sh
-```
-
-Inside the pod, check if there are directories secrets and configs:
-```bash
-ls
-```
-
-Check what is in these directories:
-```bash
-ls /app/configs
-```
+Copy the name of one of the application pods and connect to it:
 
 ```bash
-ls /app/secrets
+kubectl exec -it <pod-name> -n todoapp -- sh
 ```
 
+Inside the pod, check that the ConfigMap data is mounted in the correct directory:
 
+```bash
+ls -la /app/configs
+```
+
+Each ConfigMap key should be represented as a separate file in the `/app/configs` directory.
+
+Check the contents of the mounted ConfigMap file:
+
+```bash
+cat /app/configs/PYTHONUNBUFFERED
+```
+
+The command should display the value stored under the `PYTHONUNBUFFERED` key in the ConfigMap.
+
+## Checking that Secret data is mounted as files
+
+Inside the same pod, check that the Secret data is mounted in the correct directory:
+
+```bash
+ls -la /app/secrets
+```
+
+Each Secret key should be represented as a separate file in the `/app/secrets` directory.
+
+Check the contents of the mounted Secret file:
+
+```bash
+cat /app/secrets/SECRET_KEY
+```
+
+The command should display the value stored under the `SECRET_KEY` key in the Secret.
+
+Exit the pod:
+
+```bash
+exit
+```
